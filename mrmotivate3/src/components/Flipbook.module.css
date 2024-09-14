@@ -1,0 +1,97 @@
+/* components/Flipbook.module.css */
+
+.book {
+    position: relative;
+    width: 80%; /* Adjust the width as needed */
+    height: 80vh; /* Adjust the height as needed */
+    margin: auto; /* Center the book */
+    perspective: 1500px; /* Adjust perspective for better 3D effect */
+    border: 2px solid #ddd; /* Border color for the book container */
+  }
+  
+  .hiddenInput {
+    display: none; /* Hides the input elements used for flipping */
+  }
+  
+  .page {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d; /* Ensures children are rendered in 3D */
+    transform-origin: left;
+    background-color: rgba(255, 255, 255, 0.5); /* Temporary background color for debugging */
+  }
+  
+  .frontPage,
+  .backPage {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: white;
+    border: 2px solid #00f; /* Border color for pages */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden; /* Ensure content is not clipped */
+  }
+  
+  .frontPage {
+    z-index: 2; /* Ensures the front page is on top */
+    transform: rotateY(0deg);
+  }
+  
+  .backPage {
+    transform: rotateY(-180deg);
+  }
+  
+  .cover {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: white;
+    border: 2px solid #ff0; /* Border color for the cover */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    overflow: hidden; /* Ensure content is not clipped */
+  }
+  
+  .coverLabel {
+    cursor: pointer;
+  }
+  
+  .next,
+  .prev {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.5rem; /* Adjust icon size */
+    cursor: pointer;
+    color: #000; /* Color for navigation icons */
+  }
+  
+  .next {
+    right: 10px;
+  }
+  
+  .prev {
+    left: 10px;
+  }
+  
+  /* Define page transformations when clicked */
+  input#coverInput:checked ~ .book .page {
+    transform: rotateY(-180deg); /* Rotate pages */
+  }
+  
+  input#page1Input:checked ~ .book .page1 {
+    transform: rotateY(-180deg); /* Rotate first page */
+  }
+  
+  input#page2Input:checked ~ .book .page2 {
+    transform: rotateY(-180deg); /* Rotate second page */
+  }
+  
+  

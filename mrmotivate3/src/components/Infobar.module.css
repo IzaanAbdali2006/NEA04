@@ -1,0 +1,52 @@
+.Infobar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 30px;
+    padding: 5px;
+    width: 100%;
+    background-color: white;
+}
+.Infobar_left{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.OneInfo {
+    display: flex;
+    flex-direction: row;
+    margin-left: 10px;
+}
+
+.OneInfotext {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    /* margin: 12px; */
+}
+
+.OneInfotextBold {
+    color: #2A9D8F;
+    font-weight: bolder;
+    margin-right: 5px;
+}
+
+.OneInfotextBold2 {
+    color: #2A9D8F;
+    font-weight: bolder;
+    margin-left: 5px;
+}
+.Infobar_right {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-right: 10px;
+}
+.ProfilePicContainer {
+    width: 30px; /* Adjust as needed */
+    height: 30px; /* Adjust as needed */
+    overflow: hidden;
+    border-radius: 50%;
+  
+}

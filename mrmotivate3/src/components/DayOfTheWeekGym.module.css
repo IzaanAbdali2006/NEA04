@@ -1,0 +1,11 @@
+.DayOfTheWeekGym {
+    margin-top: 30px;
+}
+.WeeklyActivityLine {
+    display: flex;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #2a9d8f;
+    padding: 5px;
+}

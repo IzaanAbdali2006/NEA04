@@ -1,0 +1,183 @@
+.text {
+  position: absolute;
+  top: 30%;
+  left: 18.5%;
+  color: #000000;
+}
+
+.text1 {
+  font-size: 35px;
+  font-weight: bold;
+  color: #2a9d8f;
+}
+
+.ActivitiesSummary {
+  display: flex;
+  flex-direction: row;
+}
+
+.ActivitiesSummaryLeft {
+  flex: 1;
+  padding: 20px;
+}
+.ActivitiesSummaryRight {
+  flex: 2;
+  margin: 50px;
+}
+.ChartContainer {
+  display: flex;
+  align-self: center;
+}
+.MainLine {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2a9d8f;
+    padding: 5px;
+}
+.Table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    margin-left: 0px;
+  }
+  
+  .Table th,
+  .Table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 2px solid #ddd; /* Add bottom border to table cells */
+  }
+  
+  .Table th {
+    background-color: #2A9D8F;
+    color: white;
+  }
+  
+  /* Progress bar styles */
+  .ProgressBar {
+    height: 12px;
+    background-color: #f0f0f0; /* Light background color for progress bar container */
+    border-radius: 6px; /* Rounded corners for progress bar */
+    overflow: hidden; /* Hide overflow of progress bar inner div */
+  }
+  
+  .ProgressBarInner {
+    height: 100%;
+    background-color: #2A9D8F; /* Green color for progress */
+  }
+  
+  /* Hover effect for table rows */
+  .Table tbody tr:hover {
+    background-color: #f5f5f5; /* Light background color on hover */
+  }
+  /* Modal background */
+.modal {
+  display: flex; /* Center the modal */
+  position: fixed; /* Fixed position */
+  z-index: 1000; /* On top */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4); /* Black with opacity */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+}
+
+/* Modal background */
+.modal {
+  display: flex; /* Center the modal */
+  position: fixed; /* Fixed position */
+  z-index: 1000; /* On top */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4); /* Black with opacity */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+}
+
+/* Modal content */
+.modalContent {
+  background-color: #fefefe;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  position: relative; /* Relative to position the close button */
+}
+
+/* Close button */
+.closeBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #aaa;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.closeBtn:hover,
+.closeBtn:focus {
+  color: black;
+}
+
+/* Form styling */
+.modalForm {
+  display: flex;
+  flex-direction: column;
+}
+
+.modalFormLabel {
+  margin-bottom: 5px;
+}
+
+.modalFormInput {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+
+.modalFormButton {
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.modalFormButton:hover {
+  background-color: #45a049;
+}
+
+/* Modal open button */
+.openModalBtn {
+  padding: 10px 20px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.openModalBtn:hover {
+  background-color: #0056b3;
+}
+.ProgressBar {
+  width: 100%;
+  background-color: #e0e0e0; /* Light gray background */
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ProgressBarInner {
+  height: 20px; /* Adjust height as needed */
+  background-color: #2A9D8F; /* Default color */
+  width: 0%;
+  transition: width 0.3s ease; /* Smooth transition */
+}
+
+.ProgressBarZero {
+  background-color: #E76F51; /* Color for 0% completion */
+}

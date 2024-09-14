@@ -1,0 +1,5 @@
+CREATE DATABASE MrMotivate3
+
+CREATE TABLE todo {
+    
+}

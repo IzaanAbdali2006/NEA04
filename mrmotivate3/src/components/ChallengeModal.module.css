@@ -1,0 +1,143 @@
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+ .modal h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.modalForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modalForm label {
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.modalForm input,
+.modalForm textarea,
+.modalForm select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.modalForm textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.createButton {
+    background-color: #2a9d8f;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 48%;
+}
+
+.createButton:hover {
+    background-color: #21867a;
+}
+
+.cancelButton {
+    background-color: #2a9d8f;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 48%;
+}
+
+.cancelButton:hover {
+    background-color: #21867a;
+}
+.nextButton{
+    background-color: #2a9d8f;
+    color: white;
+    border: none;
+    border-radius: 10px;
+}
+.nextButton:hover{
+    background-color: #21867a;
+}
+.AddParticipant{
+    background-color: #2a9d8f;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 48%;
+    align-self: center;   
+}
+.modal h2 {
+    color: #2a9d8f;
+    font-weight: bold;
+}
+.participantTags {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px; /* Adjust the gap between items if needed */
+    padding: 10px;
+}
+.participantTag{
+    border-radius: 20px;
+    background-color: 
+    #F0F0F0;
+    display: flex;
+    justify-content: space-between;
+}
+.removeParticipantButton{
+    background-color: #2a9d8f;
+    border-radius:50% ;
+    margin-right: 5px;
+    border: none;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+}
+.participantusername{
+    margin-top: 3.75px;
+}
+.usericon{
+    margin-top: 3.75px;
+    margin-left: 5px;
+    color: #2a9d8f;
+}

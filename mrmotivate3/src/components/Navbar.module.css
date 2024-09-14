@@ -1,0 +1,28 @@
+/* Navbar.module.css */
+
+.sidebar {
+  /* background-color: aqua; */
+  height: 100%;
+  margin: 0;
+  position: fixed;
+  background: white;
+}
+
+.sidebar_list {
+  /* background-color: beige; */
+  height: 100vh;
+  display: flex; /* Make it a flex container */
+  flex-direction: column;
+  /* border: 1px solid black; */
+}
+
+.OneNavComp {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  padding: 15px;
+  align-items: center;
+  justify-content: center;
+
+}
+

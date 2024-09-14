@@ -1,0 +1,127 @@
+/* Challenges.module.css */
+
+.Heading {
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    font-weight: 600;
+    color: #2a9d8f;
+}
+
+.Challenges {
+    flex: 1;
+    margin-top: 30px;
+    margin-left: 10px;
+    margin-right: 10px;
+    border: 1px solid #2a9d8f;
+    border-radius: 20px;
+    background-color: #f9f9f9;
+    padding: 20px;
+}
+
+.options {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.option {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.option:hover {
+    background-color: #e0f7fa;
+}
+
+.activeOption {
+    background-color: #2a9d8f;
+    color: white;
+    font-weight: bold;
+}
+
+.ChallengeList {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 equal columns */
+    gap: 16px;
+}
+
+.challengeItem {
+    padding: 15px;
+    margin: 10px 0;
+    border: 1px solid #2a9d8f;
+    border-radius: 10px;
+    background-color: #ffffff;
+    transition: background-color 0.3s ease;
+}
+
+.challengeItem:hover {
+    background-color: #f0fdf4;
+}
+
+.challengeItem h3 {
+    font-size: 20px;
+    color: #2a9d8f;
+    margin-bottom: 5px;
+}
+
+.challengeItem p {
+    font-size: 14px;
+    color: #555;
+    margin: 2px 0;
+}
+
+.CreateChallengeButton {
+    background-color: #2a9d8f;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    align-self: center;
+    transition: background-color 0.3s ease;
+}
+
+.CreateChallengeButton:hover {
+    background-color: #21867a;
+}
+
+
+.dates{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: 12px;
+}
+.timelineWrapper {
+    width: 100%;
+    background-color: #e0e0e0; /* Background color for the timeline */
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.timeline {
+    height: 10px;
+    background-color: #4caf50; /* Color for the filled portion of the timeline */
+    transition: width 0.3s ease; /* Smooth transition for width changes */
+}
+.list {
+    list-style-type: none;
+    width: 100%;
+    padding: 8px;
+    display: flex;
+    flex-direction: row;
+}
+.leaderboard ul {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 0px;
+}
