@@ -695,6 +695,14 @@ app.post("/excercises", async (req, res) => {
       exercise_name, // received from the frontend
       calories_burned
     } = req.body;
+    if (!userid || !muscles || !reps || !sets || !estimatedtime || !priority || !exercise_name || !calories_burned) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Ensure that fields that should not be null are not null
+    if (userid == null || muscles == null || reps == null || sets == null || estimatedtime == null || priority == null || exercise_name == null || calories_burned == null) {
+      return res.status(400).json({ error: "Invalid input: none of the fields can be null" });
+    }
 
     // Set completed to false by default
     const completed = false;
@@ -734,7 +742,7 @@ app.post("/excercises", async (req, res) => {
 
     // Check if stats for the current month exist
     const { rowCount: statsExist } = await pool.query(
-      'SELECT 1 FROM stats WHERE userid = $1 AND TO_CHAR(month, \'YYYY-MM\') = $2',
+      'SELECT 1 FROM stats WHERE userid = $1 AND month = $2',
       [userid, currentMonth]
     );
 
@@ -743,7 +751,7 @@ app.post("/excercises", async (req, res) => {
       const updateStatsQuery = `
         UPDATE stats
         SET taskssetthismonth = taskssetthismonth + 1
-        WHERE userid = $1 AND TO_CHAR(month, 'YYYY-MM') = $2;
+        WHERE userid = $1 AND month = $2;
       `;
       await pool.query(updateStatsQuery, [userid, currentMonth]);
     } else {
@@ -769,7 +777,6 @@ app.post("/excercises", async (req, res) => {
         SET categorytaskset = categorytaskset + 1
         WHERE userid = $1 AND categoryname = 'Excercise';
       `;
-
       await pool.query(updateCategoryQuery, [userid]);
     } else {
       // If category does not exist, create it with categorytaskset set to 1
@@ -777,7 +784,6 @@ app.post("/excercises", async (req, res) => {
         INSERT INTO categories (userid, categoryname, categorytaskset)
         VALUES ($1, 'Excercise', 1);
       `;
-
       await pool.query(insertCategoryQuery, [userid]);
     }
 
@@ -788,10 +794,10 @@ app.post("/excercises", async (req, res) => {
     res.status(201).json(exerciseRows[0]);
   } catch (err) {
     console.error(err.message);
-    
+
     // Rollback transaction in case of error
     await pool.query('ROLLBACK');
-    
+
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -951,7 +957,9 @@ app.post('/journals', async (req, res) => {
       progress_things_ive_learnt,
       date // Ensure date is in YYYY-MM-DD format
     } = req.body;
-
+    if (!userid || !highlights || !what_im_grateful_for || !progress_things_ive_learnt || !date) {
+      return res.status(400).json({ error: "All fields must be provided and cannot be null." });
+    }
     // Check if the journal entry is fully completed (i.e., no null values)
     const isCompleted = [highlights, what_im_grateful_for, progress_things_ive_learnt].every(val => val !== null);
 
@@ -1000,7 +1008,7 @@ app.post('/journals', async (req, res) => {
 
     // Check if a stats record for the current month exists
     const { rowCount: statsExist } = await pool.query(
-      'SELECT 1 FROM stats WHERE userid = $1 AND TO_CHAR(month, \'YYYY-MM\') = $2',
+      'SELECT 1 FROM stats WHERE userid = $1 AND month = $2',
       [userid, currentMonth]
     );
 
@@ -1013,7 +1021,7 @@ app.post('/journals', async (req, res) => {
             taskscompletedthismonth = taskscompletedthismonth + 1,
             taskssetthismonth = taskssetthismonth + 1,
             hoursofselfimprovement = hoursofselfimprovement + 0.25
-          WHERE userid = $1 AND TO_CHAR(month, 'YYYY-MM') = $2;
+          WHERE userid = $1 AND  month = $2;
         `, [userid, currentMonth]);
       } else {
         await pool.query(`
@@ -1021,7 +1029,7 @@ app.post('/journals', async (req, res) => {
           SET 
             taskssetthismonth = taskssetthismonth + 1,
             hoursofselfimprovement = hoursofselfimprovement + 0.16
-          WHERE userid = $1 AND TO_CHAR(month, 'YYYY-MM') = $2;
+          WHERE userid = $1 AND month = $2;
         `, [userid, currentMonth]);
       }
     } else {
@@ -1497,7 +1505,7 @@ app.get('/getfriends/:userid', async (req, res) => {
 
 app.post('/challenges', async (req, res) => {
   const {
-    userid,
+    leaduserid, // Correct field name
     challengename,
     challengedesc,
     invitedparticipants,
@@ -1505,7 +1513,6 @@ app.post('/challenges', async (req, res) => {
     enddate,
     freq,
     estimatedtime,
-    leaduserid,
     publicity
   } = req.body;
 
@@ -1516,10 +1523,10 @@ app.post('/challenges', async (req, res) => {
     // Get the current month in 'YYYY-MM' format
     const currentMonth = new Date().toISOString().slice(0, 7);
 
-    // Check if a stats record for the current month exists for the user
+    // Check if a stats record for the current month exists for the lead user
     const { rowCount: statsExist } = await pool.query(
-      'SELECT 1 FROM stats WHERE userid = $1 AND TO_CHAR(month, \'YYYY-MM\') = $2',
-      [userid, currentMonth]
+      'SELECT 1 FROM stats WHERE userid = $1 AND month = $2',
+      [leaduserid, currentMonth] // Use leaduserid here
     );
 
     if (!statsExist) {
@@ -1527,14 +1534,14 @@ app.post('/challenges', async (req, res) => {
       await pool.query(`
         INSERT INTO stats (userid, month, taskssetthismonth, taskscompletedthismonth)
         VALUES ($1, $2, 1, 0);
-      `, [userid, currentMonth]);
+      `, [leaduserid, currentMonth]); // Use leaduserid here
     } else {
       // If a stats record exists, increment taskssetthismonth
       await pool.query(`
         UPDATE stats
         SET taskssetthismonth = taskssetthismonth + 1
-        WHERE userid = $1 AND TO_CHAR(month, 'YYYY-MM') = $2;
-      `, [userid, currentMonth]);
+        WHERE userid = $1 AND month = $2;
+      `, [leaduserid, currentMonth]); // Use leaduserid here
     }
 
     // Insert the new challenge
@@ -1551,7 +1558,7 @@ app.post('/challenges', async (req, res) => {
       enddate,
       freq,
       estimatedtime,
-      leaduserid,
+      leaduserid, // Correct field name
       publicity
     ]);
 
@@ -1788,7 +1795,7 @@ app.post('/generate-todos', async (req, res) => {
 
           // Check if a stats record exists for the user for the current month
           const { rowCount: statsExist } = await client.query(
-            'SELECT 1 FROM stats WHERE userid = $1 AND TO_CHAR(month, \'YYYY-MM\') = $2',
+            'SELECT 1 FROM stats WHERE userid = $1 AND month = $2',
             [userId, currentMonth]
           );
 
@@ -1803,7 +1810,7 @@ app.post('/generate-todos', async (req, res) => {
             await client.query(`
               UPDATE stats
               SET taskssetthismonth = taskssetthismonth + 1
-              WHERE userid = $1 AND TO_CHAR(month, 'YYYY-MM') = $2;
+              WHERE userid = $1 AND month = $2;
             `, [userId, currentMonth]);
           }
         }
