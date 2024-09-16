@@ -7,6 +7,7 @@ import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import BookIcon from "@mui/icons-material/Book";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp"; // Import logout icon
+import GroupsIcon from '@mui/icons-material/Groups';
 import logo from "../images/logo.png";
 
 export default function Navbar() {
@@ -33,7 +34,7 @@ export default function Navbar() {
           <div className={styles.OneNavComp}>
             <HomeIcon style={{ fontSize: "30px", color: "#2A9D8F" }} />
             <a
-              href={`/${homeUrl}`}
+              href={`/home`}
               style={{
                 textDecoration: "none",
                 color: "black",
@@ -48,7 +49,7 @@ export default function Navbar() {
               style={{ fontSize: "30px", color: "#2A9D8F" }}
             />
             <a
-              href={`/${homeUrl}/mygym`}
+              href={`/mygym`}
               style={{
                 textDecoration: "none",
                 color: "black",
@@ -61,7 +62,7 @@ export default function Navbar() {
           <div className={styles.OneNavComp}>
             <BookIcon style={{ fontSize: "30px", color: "#2A9D8F" }} />
             <a
-              href={`/${homeUrl}/myjournal`}
+              href={`/myjournal`}
               style={{
                 textDecoration: "none",
                 color: "black",
@@ -74,7 +75,7 @@ export default function Navbar() {
           <div className={styles.OneNavComp}>
             <YouTubeIcon style={{ fontSize: "30px", color: "#2A9D8F" }} />
             <a
-              href={`/${homeUrl}/myknowledge`}
+              href={`/myknowledge`}
               style={{
                 textDecoration: "none",
                 color: "black",
@@ -82,6 +83,19 @@ export default function Navbar() {
               }}
             >
               My Knowledge
+            </a>
+          </div>
+          <div className={styles.OneNavComp}>
+            <GroupsIcon style={{ fontSize: "30px", color: "#2A9D8F" }} />
+            <a
+              href={`/myknowledge`}
+              style={{
+                textDecoration: "none",
+                color: "black",
+                fontSize: "16px",
+              }}
+            >
+              My friends
             </a>
           </div>
           <div className={styles.OneNavComp}>

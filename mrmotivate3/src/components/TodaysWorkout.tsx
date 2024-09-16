@@ -87,29 +87,34 @@ export default function TodaysWorkout() {
 
   const handleButtonClick = async (id) => {
     console.log("Button clicked for exercise ID:", id); // Debugging log
-
+  
     const exercise = exercises.find(ex => ex.id === id);
     if (!exercise) {
       console.error("Exercise not found for ID:", id);
       return;
     }
-
+  
+    const requestData = {
+      userid: localStorage.getItem("userid"),
+      exercisid: id,
+    };
+  
+    // Log the JSON.stringify of the requestData
+    console.log("Request data being sent:", JSON.stringify(requestData));
+  
     try {
       const response = await fetch("http://localhost:5000/complete-exercise", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userid: localStorage.getItem("userid"),
-          exercisid: id,
-        }),
+        body: JSON.stringify(requestData),
       });
-
+  
       if (!response.ok) {
         throw new Error("Failed to update exercise");
       }
-
+  
       setExercises(prevExercises =>
         prevExercises.map(ex =>
           ex.id === id ? { ...ex, clicked: !ex.clicked } : ex
@@ -132,39 +137,48 @@ export default function TodaysWorkout() {
 
   const handleAddExerciseSubmit = async () => {
     const userId = localStorage.getItem("userid");
+
+    // Debugging log
+    console.log("Selected Muscles:", selectedMuscles);
+
+    const exerciseData = {
+        userid: userId,
+        exercise_name: exerciseName,
+        muscles: selectedMuscles.map(muscle => muscle.value), // Ensure this is an array of values
+        reps: parseInt(reps),
+        sets: parseInt(sets),
+        estimatedtime: parseInt(estimatedTime),
+        priority: parseInt(priority),
+        calories_burned: parseInt(caloriesBurned),
+    };
+
+    // Debugging log
+    console.log("Exercise data being sent:", JSON.stringify(exerciseData));
     
-    console.log("Selected Muscles:", selectedMuscles); // Debugging log
 
     try {
-      const response = await fetch('http://localhost:5000/excercises', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userid: userId,
-          exercise_name: exerciseName,
-          muscles: selectedMuscles.map(muscle => muscle.value), // Ensure this is an array of values
-          reps: parseInt(reps),
-          sets: parseInt(sets),
-          estimatedtime: parseInt(estimatedTime),
-          priority: parseInt(priority),
-          calories_burned: parseInt(caloriesBurned),
-        }),
-      });
+        const response = await fetch('http://localhost:5000/excercises', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(exerciseData),
+        });
 
-      if (response.ok) {
-        const newExercise = await response.json();
-        setExercises([...exercises, newExercise]);
-        setShowModal(false);
-        console.log("New exercise added:", newExercise); // Debugging log
-      } else {
-        console.error("Failed to add exercise");
-      }
+        if (response.ok) {
+            const newExercise = await response.json();
+            setExercises([...exercises, newExercise]);
+            setShowModal(false);
+            console.log("New exercise added:", newExercise); // Debugging log
+        } else {
+            console.error("Failed to add exercise. Status:", response.status);
+            const errorResponse = await response.text(); // Or response.json() if the response is in JSON format
+            console.log("Error response:", errorResponse);
+        }
     } catch (error) {
-      console.error('Failed to add exercise:', error);
+        console.error('Failed to add exercise:', error.message || error);
     }
-  };
+};
 
   const editWorkoutUrl = `${currentUrl}/editworkout`;
 
@@ -186,7 +200,7 @@ export default function TodaysWorkout() {
           {exercises.map((exercise) => (
             <div className={styles.Exercise} key={exercise.id}>
               <div className={styles.ExerciseLeft}>
-                <h3 style={{ color: "#2a9d8f" }}>{exercise.exercise}</h3>
+                <h3 style={{ color: "#2a9d8f" }}>{}</h3>
                 <p>
                   {exercise.muscles.map((muscle, index) => (
                     <span key={index}>
@@ -198,6 +212,7 @@ export default function TodaysWorkout() {
               </div>
               <div className={styles.ExerciseRight}>
                 <div className={styles.Line1}>
+                <p style={{ color: "#2a9d8f", fontWeight: "bold" }}>{exercise.exercise}</p>
                   <p style={{ marginRight: 15 }}>{exercise.reps}</p>
                   <p style={{ color: "#2a9d8f", fontWeight: "bold" }}>X</p>
                   <p style={{ color: "#2a9d8f", fontWeight: "bold" }}>{exercise.sets}</p>

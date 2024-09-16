@@ -90,16 +90,22 @@ app.post("/users", async (req, res) => {
     const currentDate = new Date();
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
 
+    // Format the date as "YYYY-MM"
+    const monthString = `${firstDayOfMonth.getFullYear()}-${(firstDayOfMonth.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}`;
+
     // Insert initial stats for the first day of the current month
     const statsQuery = `
       INSERT INTO Stats (userid, month, hoursofselfimprovement, monthlylevel, streak, taskssetthismonth, taskscompletedthismonth)
-      VALUES ($1, $2, 0, 0, 0, 0, 0)
+      VALUES ($1, $2, 0, 0, 0, 1, 0)
     `;
 
-    await pool.query(statsQuery, [userId, firstDayOfMonth]);
+    await pool.query(statsQuery, [userId, monthString]);
 
     // Respond with the newly created user
     res.json(newUser.rows[0]);
+    console.log(monthString);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: "Server error" });
@@ -326,21 +332,15 @@ app.delete("/categories/:id", async (req, res) => {
 // Todos
 
 // Get all todos from a user
-app.get("/todos/:userid", async (req, res) => {
+app.get('/todos/:userId', async (req, res) => {
+  const { userId } = req.params;
+  
   try {
-    const { userid } = req.params;
-    const todosQuery = `
-      SELECT * 
-      FROM todos 
-      WHERE userid = $1 
-        AND CURRENT_DATE < deadlinedate
-        OR CURRENT_DATE > date
-    `;
-    const todos = await pool.query(todosQuery, [userid]);
-    res.json(todos.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: "Server error" });
+    const result = await pool.query('SELECT * FROM todos WHERE userid = $1', [userId]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Failed to fetch todos:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 // Create a new todo
@@ -373,8 +373,8 @@ app.post("/todos", async (req, res) => {
     `;
     await pool.query(updateCategoryQuery, [categoryid]);
 
-    // Get the first day of the current month (in YYYY-MM-DD format)
-    const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    // Get the first day of the current month in YYYY-MM format
+    const firstDayOfMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
 
     // Check if a stats record for the current month exists
     const checkStatsQuery = `
@@ -497,18 +497,18 @@ app.patch('/todos/:id/complete', async (req, res) => {
 
     // Check if stats for the current month exist
     const { rowCount: statsExist } = await client.query(
-      'SELECT 1 FROM stats WHERE userid = $1 AND TO_CHAR(month, \'YYYY-MM\') = $2',
+      'SELECT 1 FROM stats WHERE userid = $1 AND month = $2',
       [userId, currentMonth]
     );
 
     if (statsExist) {
       // If stats for the current month exist, update them
       await client.query(
-        'UPDATE stats SET taskscompletedthismonth = taskscompletedthismonth + 1 WHERE userid = $1 AND TO_CHAR(month, \'YYYY-MM\') = $2',
+        'UPDATE stats SET taskscompletedthismonth = taskscompletedthismonth + 1 WHERE userid = $1 AND month = $2',
         [userId, currentMonth]
       );
       await client.query(
-        'UPDATE stats SET hoursofselfimprovement = hoursofselfimprovement + $1 WHERE userid = $2 AND TO_CHAR(month, \'YYYY-MM\') = $3',
+        'UPDATE stats SET hoursofselfimprovement = hoursofselfimprovement + $1 WHERE userid = $2 AND month = $3',
         [estimatedTime, userId, currentMonth]
       );
     } else {
@@ -692,9 +692,11 @@ app.post("/excercises", async (req, res) => {
       sets,
       estimatedtime,
       priority,
-      exercise_name, // received from the frontend
+      exercise_name,
       calories_burned
     } = req.body;
+
+    // Validate all required fields
     if (!userid || !muscles || !reps || !sets || !estimatedtime || !priority || !exercise_name || !calories_burned) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -710,9 +712,6 @@ app.post("/excercises", async (req, res) => {
     // Rename exercise_name to excercise_name for the database insertion
     const excercise_name = exercise_name;
 
-    // Format today's date as YYYY-MM-DD
-    const todayDate = formatDate(new Date());
-
     // Get the current month in 'YYYY-MM' format
     const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -722,7 +721,7 @@ app.post("/excercises", async (req, res) => {
     // SQL query to insert a new exercise
     const insertExerciseQuery = `
       INSERT INTO todays_workouts (userid, muscles, reps, sets, estimatedtime, priority, completed, date, excercise_name, calories_burned)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_DATE, $8, $9)
       RETURNING *;
     `;
 
@@ -734,8 +733,7 @@ app.post("/excercises", async (req, res) => {
       sets,
       estimatedtime,
       priority,
-      completed, // Default to false
-      todayDate,
+      completed,
       excercise_name,
       calories_burned
     ]);
@@ -763,9 +761,9 @@ app.post("/excercises", async (req, res) => {
       await pool.query(insertStatsQuery, [userid, currentMonth]);
     }
 
-    // SQL query to check if the "Excercise" category exists in categories table
+    // SQL query to check if the "Exercise" category exists in categories table
     const checkCategoryQuery = `
-      SELECT * FROM categories WHERE userid = $1 AND categoryname = 'Excercise';
+      SELECT * FROM categories WHERE userid = $1 AND categoryname = 'Exercise';
     `;
 
     const { rows: categoryRows } = await pool.query(checkCategoryQuery, [userid]);
@@ -775,14 +773,14 @@ app.post("/excercises", async (req, res) => {
       const updateCategoryQuery = `
         UPDATE categories
         SET categorytaskset = categorytaskset + 1
-        WHERE userid = $1 AND categoryname = 'Excercise';
+        WHERE userid = $1 AND categoryname = 'Exercise';
       `;
       await pool.query(updateCategoryQuery, [userid]);
     } else {
       // If category does not exist, create it with categorytaskset set to 1
       const insertCategoryQuery = `
         INSERT INTO categories (userid, categoryname, categorytaskset)
-        VALUES ($1, 'Excercise', 1);
+        VALUES ($1, 'Exercise', 1);
       `;
       await pool.query(insertCategoryQuery, [userid]);
     }
@@ -864,6 +862,7 @@ app.get("/journals/:userid", async (req, res) => {
   }
 });
 app.put("/complete-exercise", async (req, res) => {
+  const client = await pool.connect();
   try {
     const { userid, exercisid } = req.body;
 
@@ -872,7 +871,7 @@ app.put("/complete-exercise", async (req, res) => {
     }
 
     // Start a transaction
-    await pool.query('BEGIN');
+    await client.query('BEGIN');
 
     // Update the exercise to mark it as completed
     const updateExerciseQuery = `
@@ -881,10 +880,10 @@ app.put("/complete-exercise", async (req, res) => {
       WHERE userid = $1 AND exercisid = $2
       RETURNING *;
     `;
-    const { rows: exerciseRows } = await pool.query(updateExerciseQuery, [userid, exercisid]);
+    const { rows: exerciseRows } = await client.query(updateExerciseQuery, [userid, exercisid]);
 
     if (exerciseRows.length === 0) {
-      await pool.query('ROLLBACK');
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: "Exercise not found" });
     }
 
@@ -895,8 +894,8 @@ app.put("/complete-exercise", async (req, res) => {
     const currentMonth = new Date().toISOString().slice(0, 7);
 
     // Check if a stats record for the current month exists
-    const { rowCount: statsExist } = await pool.query(
-      'SELECT 1 FROM stats WHERE userid = $1 AND TO_CHAR(month, \'YYYY-MM\') = $2',
+    const { rowCount: statsExist } = await client.query(
+      'SELECT 1 FROM stats WHERE userid = $1 AND month = $2',
       [userid, currentMonth]
     );
 
@@ -907,33 +906,48 @@ app.put("/complete-exercise", async (req, res) => {
         SET 
           taskscompletedthismonth = taskscompletedthismonth + 1,
           hoursofselfimprovement = hoursofselfimprovement + $3
-        WHERE userid = $1 AND TO_CHAR(month, 'YYYY-MM') = $2;
+        WHERE userid = $1 AND month = $2;
       `;
-      await pool.query(updateStatsQuery, [userid, currentMonth, estimatedTimeInHours]);
+      await client.query(updateStatsQuery, [userid, currentMonth, estimatedTimeInHours]);
     } else {
       // If no stats for the current month exist, insert a new record
       const insertStatsQuery = `
         INSERT INTO stats (userid, month, hoursofselfimprovement, monthlylevel, streak, taskssetthismonth, taskscompletedthismonth)
         VALUES ($1, $2, $3, 0, 0, 1, 1);
       `;
-      await pool.query(insertStatsQuery, [userid, currentMonth, estimatedTimeInHours]);
+      await client.query(insertStatsQuery, [userid, currentMonth, estimatedTimeInHours]);
+    }
+
+    // Check if the category "Exercise" exists
+    const { rowCount: categoryExists } = await client.query(
+      'SELECT 1 FROM categories WHERE userid = $1 AND categoryname = $2',
+      [userid, 'Exercise']
+    );
+
+    if (categoryExists === 0) {
+      // If the category does not exist, create it
+      const insertCategoryQuery = `
+        INSERT INTO categories (userid, categoryname, categorytaskcompleted)
+        VALUES ($1, $2, 0);
+      `;
+      await client.query(insertCategoryQuery, [userid, 'Exercise']);
     }
 
     // Increment the categorytaskcompleted counter in the categories table
     const updateCategoryQuery = `
       UPDATE categories
       SET categorytaskcompleted = categorytaskcompleted + 1
-      WHERE userid = $1 AND categoryname = 'Excercise';
+      WHERE userid = $1 AND categoryname = 'Exercise';
     `;
-    const { rowCount: categoryUpdated } = await pool.query(updateCategoryQuery, [userid]);
+    const { rowCount: categoryUpdated } = await client.query(updateCategoryQuery, [userid]);
 
     if (categoryUpdated === 0) {
-      await pool.query('ROLLBACK');
-      return res.status(404).json({ error: "Category record not found" });
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: "Failed to update category record" });
     }
 
     // Commit the transaction
-    await pool.query('COMMIT');
+    await client.query('COMMIT');
 
     // Return the updated exercise data
     res.status(200).json(completedExercise);
@@ -941,9 +955,11 @@ app.put("/complete-exercise", async (req, res) => {
     console.error('Error in /complete-exercise endpoint:', err.message);
 
     // Rollback transaction in case of error
-    await pool.query('ROLLBACK');
+    await client.query('ROLLBACK');
 
     res.status(500).json({ error: "Server error" });
+  } finally {
+    client.release();
   }
 });
 // Create a new journal entry

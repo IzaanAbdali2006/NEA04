@@ -9,6 +9,7 @@ export default function TodoList() {
   const [categoryId, setCategoryId] = useState("");
   const [priority, setPriority] = useState("");
   const [estimatedTime, setEstimatedTime] = useState("");
+  const [deadline, setDeadline] = useState(""); // New state for deadline
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -16,7 +17,7 @@ export default function TodoList() {
       const userId = localStorage.getItem('userid');
       if (userId) {
         try {
-          const link = `http://localhost:5000/todos/` + userId;
+          const link = `http://localhost:5000/todos/${userId}`; // Fixed URL with userId
           const response = await fetch(link);
           const todosData = await response.json();
           setTodos(todosData);
@@ -71,8 +72,9 @@ export default function TodoList() {
           userid: userId,
           todoname: todoName,
           categoryid: categoryId,
-          priority,
+          priority :priority,
           estimatedtime: estimatedTime,
+          deadlinedate: deadline // Change this to match backend
         }),
       });
       if (response.ok) {
@@ -164,6 +166,13 @@ export default function TodoList() {
               type="text"
               value={estimatedTime}
               onChange={(e) => setEstimatedTime(e.target.value)}
+            />
+            <label className={styles.modalFormLabel}>Deadline</label>
+            <input
+              className={styles.modalFormInput}
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
             />
             <button className={styles.modalFormButton} onClick={handleAddTodoSubmit}>
               Add Todo
