@@ -3,7 +3,7 @@ import styles from "../page.module.css";
 import Navbar from "@/components/Navbar";
 import Infobar from "@/components/Infobar";
 import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from "@mui/icons-material/Add";
+import AddIcon from "@mui/icons-material/Add"; // Importing Add icon
 import { useState, useEffect } from "react";
 import "react-date-range/dist/styles.css"; // main css file
 import "react-date-range/dist/theme/default.css"; // theme css file
@@ -19,7 +19,6 @@ export default function MyJournal() {
   const [progress, setProgress] = useState("");
   const [thingsLearnt, setThingsLearnt] = useState("");
   const [journals, setJournals] = useState([]);
-  const [filteredJournals, setFilteredJournals] = useState([]);
 
   const userId = localStorage.getItem("userid");
 
@@ -29,8 +28,8 @@ export default function MyJournal() {
         const response = await fetch(`http://localhost:5000/journals/${userId}`);
         if (response.ok) {
           const data = await response.json();
+          console.log("Fetched Journals:", data); // Log the fetched journals
           setJournals(data);
-          filterJournals(searchInput, startDate, endDate); // Initial filter
         } else {
           console.error("Failed to fetch journals");
         }
@@ -42,36 +41,15 @@ export default function MyJournal() {
     fetchJournals();
   }, [userId]);
 
-  useEffect(() => {
-    filterJournals(searchInput, startDate, endDate);
-  }, [searchInput, startDate, endDate, journals]);
-
-  const filterJournals = (keyword, start, end) => {
-    const filtered = journals.filter((journal) => {
-      const journalDate = new Date(journal.date);
-      const isWithinDateRange =
-        journalDate >= new Date(start).setHours(0, 0, 0, 0) &&
-        journalDate <= new Date(end).setHours(23, 59, 59, 999);
-
-      const lowerCaseKeyword = keyword.toLowerCase();
-      const matchesKeyword = lowerCaseKeyword
-        ? (journal.highlights?.toLowerCase().includes(lowerCaseKeyword) ||
-           journal.what_im_grateful_for?.toLowerCase().includes(lowerCaseKeyword) ||
-           journal.progress_things_ive_learnt?.toLowerCase().includes(lowerCaseKeyword) ||
-           journal.things_ive_learnt?.toLowerCase().includes(lowerCaseKeyword))
-        : true;
-
-      return isWithinDateRange && matchesKeyword;
-    });
-
-    setFilteredJournals(filtered);
+  const selectionRange = {
+    startDate: startDate,
+    endDate: endDate,
+    key: "selection",
   };
 
   const handleSelect = (ranges) => {
-    const { startDate, endDate } = ranges.selection;
-    setStartDate(startDate);
-    setEndDate(endDate);
-    filterJournals(searchInput, startDate, endDate);
+    setStartDate(ranges.selection.startDate);
+    setEndDate(ranges.selection.endDate);
   };
 
   const openModal = () => {
@@ -104,7 +82,6 @@ export default function MyJournal() {
       if (response.ok) {
         const newJournal = await response.json();
         setJournals([...journals, newJournal]);
-        filterJournals(searchInput, startDate, endDate); // Re-filter after adding
         closeModal();
       } else {
         console.error("Failed to add journal entry");
@@ -114,11 +91,21 @@ export default function MyJournal() {
     }
   };
 
-  const selectionRange = {
-    startDate: startDate,
-    endDate: endDate,
-    key: "selection",
-  };
+  // Filter journals based on search input and date range
+  const filteredJournals = journals.filter((journal) => {
+    const matchesDate =
+      new Date(journal.date) >= startDate && new Date(journal.date) <= endDate;
+
+    const matchesSearch =
+      (journal.highlights?.toLowerCase().includes(searchInput.toLowerCase()) || false) ||
+      (journal.what_im_grateful_for?.toLowerCase().includes(searchInput.toLowerCase()) || false) ||
+      (journal.progress_things_ive_learnt?.toLowerCase().includes(searchInput.toLowerCase()) || false) ||
+      (journal.things_ive_learnt?.toLowerCase().includes(searchInput.toLowerCase()) || false);
+
+    console.log(`Journal Date: ${journal.date}, Date Match: ${matchesDate}, Search Match: ${matchesSearch}`);
+    
+    return matchesDate || matchesSearch; // return true if either matches
+  });
 
   return (
     <div className={styles.container}>
@@ -168,19 +155,15 @@ export default function MyJournal() {
 
         {/* Display filtered journals */}
         <div className={styles.journalEntries}>
-          {filteredJournals.length > 0 ? (
-            filteredJournals.map((journal) => (
-              <div key={journal.id} className={styles.journalEntry}>
-                <p><strong>Date:</strong> {journal.date}</p>
-                <p><strong>Highlights:</strong> {journal.highlights}</p>
-                <p><strong>What I'm Grateful For:</strong> {journal.what_im_grateful_for}</p>
-                <p><strong>Progress:</strong> {journal.progress_things_ive_learnt}</p>
-                <p><strong>Things I've Learnt:</strong> {journal.things_ive_learnt}</p>
-              </div>
-            ))
-          ) : (
-            <p>No journals match your criteria.</p>
-          )}
+          {filteredJournals.map((journal) => (
+            <div key={journal.id} className={styles.journalEntry}>
+              <p><strong>Date:</strong> {journal.date}</p>
+              <p><strong>Highlights:</strong> {journal.highlights}</p>
+              <p><strong>What I'm Grateful For:</strong> {journal.what_im_grateful_for}</p>
+              <p><strong>Progress:</strong> {journal.progress_things_ive_learnt}</p>
+              <p><strong>Things I've Learnt:</strong> {journal.things_ive_learnt}</p>
+            </div>
+          ))}
         </div>
 
         {/* Modal for adding a journal entry */}
@@ -242,5 +225,7 @@ export default function MyJournal() {
     </div>
   );
 }
+
+
 
 

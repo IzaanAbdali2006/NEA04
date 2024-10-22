@@ -12,7 +12,7 @@ export default function MonitorFriends({ leaderboardData }) {
   const [usernamesMap, setUsernamesMap] = useState({}); // Mapping user IDs to usernames
 
   useEffect(() => {
-    // Retrieve user ID from local storage and fetch friend requests, friends, and graph data
+    // Retrieve user ID from local storage and fetch friend requests and graph data
     const storedUserid = localStorage.getItem("userid");
     if (storedUserid) {
       setUserid(storedUserid);
@@ -22,11 +22,30 @@ export default function MonitorFriends({ leaderboardData }) {
   }, []);
 
   useEffect(() => {
+    // Fetch friends data whenever userid changes
     if (userid) {
+      fetchFriends(userid); // Ensure userid is passed here
       fetchFriendRequests(userid);
       fetchGraphData();
     }
   }, [userid]);
+
+  const fetchFriends = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/fetchFriendsProfilePictures/${userId}`, {
+        method: "GET",
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      setFriendsData(data.friends || []);
+    } catch (error) {
+      console.error("Failed to fetch friends:", error);
+    }
+  };
 
   const fetchFriendRequests = async (userId) => {
     try {
@@ -34,17 +53,28 @@ export default function MonitorFriends({ leaderboardData }) {
         `http://localhost:5000/get-friend-requests/${userId}`,
         { method: "GET" }
       );
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+  
       const data = await response.json();
-      setFriendRequests(data.friendRequests || []);
+      
+      // Log the raw response data
+      console.log("Raw data received:", data);
+  
+      setFriendRequests(data.friendRequests || []); // Update state
+  
+      // Log the friendRequests after state update (in useEffect)
     } catch (error) {
       console.error("Failed to fetch friend requests:", error);
     }
   };
+  
+  // UseEffect to observe the change in friendRequests
+  useEffect(() => {
+    console.log("Updated friendRequests state:", friendRequests);
+  }, [friendRequests]);
 
   const fetchGraphData = async () => {
     try {
@@ -230,7 +260,7 @@ export default function MonitorFriends({ leaderboardData }) {
       console.error("Failed to unfriend:", error);
     }
   };
-
+  console.log(friendRequests)
   return (
     <div className={styles.MonitorFriends}>
       <div className={styles.Heading}>Monitor Friends</div>
@@ -253,113 +283,94 @@ export default function MonitorFriends({ leaderboardData }) {
         </div>
         <div
           className={`${styles.option} ${
-            option === "Friend request received" ? styles.activeOption : ""
+            option === "Friend requests" ? styles.activeOption : ""
           }`}
-          onClick={() => setOption("Friend request received")}
+          onClick={() => setOption("Friend requests")}
         >
-          Friend request received
+          Friend requests
         </div>
       </div>
-      <div className={styles.RenderData}>
-        {option === "My friends" && (
-          <div className={styles.data}>
-            {leaderboardData.map(
-              (user, index) =>
-                user.userid !== userid && ( // Condition to filter out the current user
-                  <div key={index} className={styles.leaderboardItem}>
-                    <div className={styles.friendusername}>
-                      <span>{usernamesMap[user.userid]}</span>
-                    </div>
-                    <div
-                      onClick={() => handleUnfriend(usernamesMap[user.userid])}
-                      className={styles.button}
-                    >
-                      Unfriend
-                    </div>
+
+      {option === "Add friends" && (
+        <div className={styles.addFriend}>
+          <div className= {styles.searchFriend}>
+          <input
+            type="text"
+            placeholder="Search for friends"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <button className= {styles.sendrequestbutton} onClick={handleSendFriendRequest}>Send Friend Request</button>
+
+          </div>
+          {suggestedFriends.length > 0 && (
+            <div className={styles.leaderboardData}>
+              <div className={styles.suggestionsHeading}>Suggested Friends</div>
+              {suggestedFriends.map((friend) => (
+                <div key={friend.userid} className={styles.leaderboardItem}>
+                  <div className= {styles.friendInfo}>
+                  <img src={`http://localhost:5000/getProfilePic/${friend.userid}`} alt={`${friend.username}'s profile`} className={styles.profilePic} />
+                  <span className= {styles.friendUsername}>                  {usernamesMap[friend.userid]} ({friend.mutualCount} mutual
+                    friends)</span>
                   </div>
-                )
-            )}
-          </div>
-        )}
-        {option === "Add friends" && (
-          <div className={styles.AddFriends}>
-            <div className={styles.Searchbardata}>
-              <input
-                type="text"
-                placeholder="Search for a friend..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={styles.searchBar}
-              />
-              <div
-                onClick={handleSendFriendRequest}
-                className={styles.sendfriendRequestbutton}
-              >
-                Send Friend Requests
-              </div>
-            </div>
-            <div className={styles.mutuals}>
-              {suggestedFriends.length > 0 ? (
-                <div className={styles.SugestedFriends}>
-                  <h3 className={styles.Heading}>Suggested Friends</h3>
-                  <ul>
-                    {suggestedFriends.map((suggestion, index) => (
-                      <div className={styles.suggestion} key={index}>
-                        <div className={styles.list}>
-                          <span className={styles.suggestedUsername}>
-                            {usernamesMap[suggestion.userid]}{" "}
-                          </span>
-                          <span className={styles.mutualfriends}>
-                            (Mutual Friends: {suggestion.mutualCount})
-                          </span>
-                        </div>
-                        <div className={styles.buttons}>
-                          <div
-                            className={styles.sendrequestbutton}
-                            onClick={() =>
-                              handleSendFriendRequestSuggested(
-                                usernamesMap[suggestion.userid]
-                              )
-                            }
-                          >
-                            Send Request
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p>No suggested friends found.</p>
-              )}
-            </div>
-          </div>
-        )}
-        {option === "Friend request received" && (
-          <div className={styles.data}>
-            {friendRequests.map((request, index) => (
-              <div key={index} className={styles.friendRequestItem}>
-                <span className={styles.username}>{request.username}</span>
-                <div className={styles.buttons}>
-                  <div
-                    className={styles.button}
-                    onClick={() => handleAcceptRequest(request.username)}
+                  <button
+                    onClick={() =>
+                      handleSendFriendRequestSuggested(
+                        usernamesMap[friend.userid]
+                      )
+                    }
+                    className= {styles.sendrequestbutton}
                   >
-                    Accept
-                  </div>
-                  <div
-                    className={styles.button}
-                    onClick={() => handleRejectRequest(request.username)}
-                  >
-                    Reject
-                  </div>
+                    Add Friend
+                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+{option === "Friend requests" && (
+  <div className={styles.friendRequests}>
+    {friendRequests.length === 0 ? (
+      <div>No pending requests</div>
+    ) : (
+      friendRequests.map((request) => (
+        <div key={request.userid} className={styles.leaderboardItem}>
+          {/* Render the username instead of the entire object */}
+          <div className= {styles.friendInfo}>
+          <img src={`http://localhost:5000/getProfilePic/${request.userid}`} alt={`${request.username}'s profile`} className={styles.profilePic} />
+          <span className= {styles.friendUsername}>{request.username}</span>
           </div>
-        )}
-      </div>
+          <div className= {styles.sendrequestbutton} onClick={() => handleAcceptRequest(request.username)}>
+            Accept
+          </div>
+          <div  className= {styles.sendrequestbutton} onClick={() => handleRejectRequest(request.username)}>
+            Reject
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
+
+{option === "My friends" && (
+  <div className={styles.myFriends}>
+    {friendsData.length === 0 ? (
+      <div>No friends added yet</div>
+    ) : (
+      friendsData.map((friend) => (
+        <div key={friend.userid} className={styles.leaderboardItem}>
+          <div className= {styles.friendInfo}>
+          <img src={`http://localhost:5000/getProfilePic/${friend.userid}`} alt={`${friend.username}'s profile`} className={styles.profilePic} />
+          <span className= {styles.friendUsername}>{friend.username}</span>
+          </div>
+          <button className={styles.sendrequestbutton} onClick={() => handleUnfriend(friend.username)}>Unfriend</button>
+        </div>
+      ))
+    )}
+  </div>
+)}
     </div>
   );
 }
-

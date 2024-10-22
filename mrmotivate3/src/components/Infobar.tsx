@@ -8,7 +8,6 @@ import streakicon from "../images/streak.png";
 import StarIcon from '@mui/icons-material/Star';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import profile_pic from "../images/profile_pic.jpg";
 
 export default function Infobar() {
   const [userStats, setUserStats] = useState({
@@ -19,12 +18,14 @@ export default function Infobar() {
     taskscompletedthismonth: 0
   });
 
+  const [profilePic, setProfilePic] = useState(null); // State for profile picture
+
   useEffect(() => {
     const fetchUserStats = async () => {
       const userId = localStorage.getItem('userid');
       if (userId) {
         try {
-          const link = "http://localhost:5000/stats/" + userId
+          const link = "http://localhost:5000/stats/" + userId;
           const response = await fetch(link);
           const stats = await response.json();
           if (stats.length > 0) {
@@ -43,7 +44,26 @@ export default function Infobar() {
       }
     };
 
+    const fetchProfilePicture = async () => {
+      const userId = localStorage.getItem('userid');
+      if (userId) {
+        try {
+          const response = await fetch(`http://localhost:5000/getProfilePic/${userId}`);
+          if (response.ok) {
+            // Assuming the image is returned directly, create a URL for the image
+            const imageUrl = URL.createObjectURL(await response.blob());
+            setProfilePic(imageUrl);
+          } else {
+            console.error("Failed to fetch profile picture:", response.statusText);
+          }
+        } catch (error) {
+          console.error("Error fetching profile picture:", error);
+        }
+      }
+    };
+
     fetchUserStats();
+    fetchProfilePicture(); // Fetch profile picture
   }, []);
 
   return (
@@ -78,15 +98,26 @@ export default function Infobar() {
         <CalendarMonthIcon style={{ fontSize: "30px", color: "#2A9D8F", marginRight: 10 }} />
         <NotificationsActiveIcon style={{ fontSize: "30px", color: "#2A9D8F", marginRight: 10 }} />
         <div className={styles.ProfilePicContainer}>
-          <Image
-            src={profile_pic}
-            alt="Profile pic"
-            width={30}
-            height={30}
-            className={styles.profilePic}
-          />
+          {profilePic ? (
+            <Image
+              src={profilePic}
+              alt="Profile pic"
+              width={30}
+              height={30}
+              className={styles.profilePic}
+            />
+          ) : (
+            <Image
+              src="/path/to/default/profile_pic.jpg" // Fallback image
+              alt="Default Profile pic"
+              width={30}
+              height={30}
+              className={styles.profilePic}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
+

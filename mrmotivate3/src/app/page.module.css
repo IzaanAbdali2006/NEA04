@@ -401,7 +401,7 @@
 }
 .leaderboardItem {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   margin: 5px;
 }
 .sortbyoption {
@@ -418,4 +418,24 @@
   background-color: #2a9d8f;
   color: white;
   font-weight: bold;
+}
+.profilePic {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  position: relative;
+  top: 15px;
+  right: -30px;
+}
+.friendUsername {
+  position: relative;
+  right: -60px;
+}
+.itemleft {
+  flex: 1;
+}
+.statNum{
+  position: relative;
+  top: 30px;
 }

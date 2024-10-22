@@ -1,12 +1,15 @@
 const express = require("express");
 const app = express();
+const multer = require('multer');
 const cors = require("cors");
 const pool = require("./db");
+const fs = require("fs");
+const path = require('path');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Adjust 'uploads' to your actual directory
 
 // functions
 const formatDate = (date) => {
@@ -95,13 +98,19 @@ app.post("/users", async (req, res) => {
       .toString()
       .padStart(2, '0')}`;
 
+    // Determine the number of days in the current month
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+
+    // Create the streak array filled with -1
+    const streakArray = Array(daysInMonth).fill(-1);
+
     // Insert initial stats for the first day of the current month
     const statsQuery = `
       INSERT INTO Stats (userid, month, hoursofselfimprovement, monthlylevel, streak, taskssetthismonth, taskscompletedthismonth)
-      VALUES ($1, $2, 0, 0, 0, 1, 0)
+      VALUES ($1, $2, 0, 0, $3, 0, 0)
     `;
 
-    await pool.query(statsQuery, [userId, monthString]);
+    await pool.query(statsQuery, [userId, monthString, JSON.stringify(streakArray)]); // Convert the array to JSON
 
     // Respond with the newly created user
     res.json(newUser.rows[0]);
@@ -111,6 +120,7 @@ app.post("/users", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // Get all users
 app.get("/users", async (req, res) => {
@@ -1450,11 +1460,12 @@ app.get('/get-friend-requests/:userid', async (req, res) => {
 
     // Fetch friend requests received by the user
     const friendRequestsQuery = `
-        SELECT u.username 
-        FROM friends f
-        JOIN users u ON u.userid = ANY(f.friendrequestreceived)
-        WHERE f.userid = $1`;
-    const { rows: friendRequests } = await pool.query(friendRequestsQuery, [userid]);
+    SELECT u.userid, u.username 
+    FROM friends f
+    JOIN users u ON u.userid = ANY(f.friendrequestreceived)
+    WHERE f.userid = $1`;
+
+const { rows: friendRequests } = await pool.query(friendRequestsQuery, [userid]);
 
     // Return the friend requests
     return res.status(200).json({ friendRequests });
@@ -1467,7 +1478,7 @@ app.get('/get-friend-requests/:userid', async (req, res) => {
 
 app.get("/stats-including-friends/:id", async (req, res) => {
   try {
-    const currentMonth = new Date().toISOString().split("T")[0].substring(0, 7);
+    const currentMonth = new Date().toISOString().split("T")[0].substring(0, 7); // Current year-month (YYYY-MM)
     const userId = req.params.id;
 
     // Get list of friends
@@ -1482,39 +1493,77 @@ app.get("/stats-including-friends/:id", async (req, res) => {
     // Include the user in the list
     friendsList.push(userId);
 
-    // Fetch stats for the user and friends
+    // Fetch stats for the user and friends for the current month
     const statsQuery = `
       SELECT *
       FROM Stats
       WHERE userid = ANY($1)
-      AND EXTRACT(YEAR FROM TO_DATE("month", 'YYYY-MM')::timestamp) = EXTRACT(YEAR FROM TO_DATE($2, 'YYYY-MM')::timestamp)
-      AND EXTRACT(MONTH FROM TO_DATE("month", 'YYYY-MM')::timestamp) = EXTRACT(MONTH FROM TO_DATE($2, 'YYYY-MM')::timestamp)
+      AND "month" = $2
     `;
-    const { rows } = await pool.query(statsQuery, [friendsList, currentMonth]);
+    const { rows: statsRows } = await pool.query(statsQuery, [friendsList, currentMonth]);
 
-    res.json(rows);
+    // Find friends (or user) without stats
+    const friendsWithoutStats = friendsList.filter(
+      friendId => !statsRows.some(stat => stat.userid === friendId)
+    );
+
+    // Insert zeroed stats for friends (or user) without stats
+    if (friendsWithoutStats.length > 0) {
+      const insertZeroStatsQuery = `
+        INSERT INTO Stats (userid, month, hoursofselfimprovement, monthlylevel, streak, taskssetthismonth, taskscompletedthismonth)
+        VALUES ($1, $2, 0, 0, 0, 0, 0)
+      `;
+
+      for (const friendId of friendsWithoutStats) {
+        await pool.query(insertZeroStatsQuery, [friendId, currentMonth]);
+      }
+    }
+
+    // Fetch updated stats after possible insertion
+    const updatedStatsQuery = `
+      SELECT *
+      FROM Stats
+      WHERE userid = ANY($1)
+      AND "month" = $2
+    `;
+    const { rows: updatedStatsRows } = await pool.query(updatedStatsQuery, [friendsList, currentMonth]);
+
+    res.json(updatedStatsRows);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
+
+
 app.get('/getfriends/:userid', async (req, res) => {
   const { userid } = req.params;
 
   try {
-    // SQL query to get all journal entries for the user
-    const getFriendsQuery = `
-      SELECT * FROM friends
-      WHERE userid = $1
+      // Fetch the friends' IDs for the given user ID
+      const friendsQuery = 'SELECT friends FROM FRIENDS WHERE userid = $1';
+      const { rows } = await pool.query(friendsQuery, [userid]);
 
-    `;
+      if (rows.length === 0) {
+          return res.status(404).json({ message: 'User not found or no friends.' });
+      }
 
-    const { rows: friends } = await pool.query(getFriendsQuery, [userid]);
+      const friendIds = rows[0].friends;
 
-    res.status(200).json(friends); // Return all journal entries
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: "Server error" });
+      // Fetch usernames for the friends' IDs
+      if (friendIds.length === 0) {
+          return res.json({ usernames: [] }); // No friends found
+      }
+
+      const usernamesQuery = `SELECT username FROM users WHERE userid = ANY($1::int[])`;
+      const usernamesResult = await pool.query(usernamesQuery, [friendIds]);
+
+      // Send back the usernames
+      const usernames = usernamesResult.rows.map(row => row.username);
+      res.json({ usernames });
+  } catch (error) {
+      console.error('Error fetching friends:', error);
+      res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -1898,5 +1947,188 @@ app.get('/challenges', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   } finally {
     client.release();
+  }
+});
+// Serve static files from the "uploads" directory
+
+// Ensure the 'uploads' directory exists
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });  // Create directory if not exists
+}
+
+// Set up Multer for file uploads 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);  // Use the uploads directory
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname); // Unique filename with timestamp
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// Route to handle profile picture upload
+app.post('/uploadProfilePicture', upload.single('profilePic'), async (req, res) => {
+  const { userid } = req.body;  // Extract user ID from request
+  const newProfilePicPath = req.file.path;  // Path where the new file is stored
+
+  try {
+      // Fetch the current profile picture path from the database
+      const currentPicResult = await pool.query(
+          'SELECT profilepiclink FROM profile_pictures WHERE userid = $1',
+          [userid]
+      );
+
+      const currentProfilePicPath = currentPicResult.rows[0]?.profilepiclink;
+
+      // If the user already has a profile picture, delete the old one
+      if (currentProfilePicPath) {
+          fs.unlink(currentProfilePicPath, (err) => {
+              if (err) {
+                  console.error("Error deleting previous profile picture:", err);
+              } else {
+                  console.log("Previous profile picture deleted:", currentProfilePicPath);
+              }
+          });
+      }
+
+      // Update or insert user's profile picture link in the database
+      let result;
+      if (currentPicResult.rows.length > 0) {
+          // Update existing profile picture
+          result = await pool.query(
+              'UPDATE profile_pictures SET profilepiclink = $1 WHERE userid = $2 RETURNING *',
+              [newProfilePicPath, userid]
+          );
+      } else {
+          // Create a new entry for the profile picture
+          result = await pool.query(
+              'INSERT INTO profile_pictures (userid, profilepiclink) VALUES ($1, $2) RETURNING *',
+              [userid, newProfilePicPath]
+          );
+      }
+
+      // Respond with the updated or newly created profile picture info
+      if (result.rows.length > 0) {
+          res.status(200).json({
+              message: 'Profile picture uploaded and updated successfully',
+              user: result.rows[0],
+          });
+      } else {
+          res.status(404).json({ message: 'User not found' });
+      }
+  } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Endpoint to fetch the profile picture for a user by user ID
+app.get('/getProfilePic/:userid', async (req, res) => {
+  const { userid } = req.params;
+
+  try {
+    // Query to get the profile picture link from the database
+    const result = await pool.query(
+      'SELECT profilepiclink FROM profile_pictures WHERE userid = $1',
+      [userid]
+    );
+
+    if (result.rows.length > 0) {
+      const profilePicLink = result.rows[0].profilepiclink;
+
+      // Construct the full path to the image file
+      const imagePath = path.join(__dirname, profilePicLink);
+
+      // Check if the file exists
+      fs.stat(imagePath, (err, stats) => {
+        if (err || !stats.isFile()) {
+          return res.status(404).json({ message: 'Profile picture not found' });
+        }
+
+        // Set the appropriate content type
+        res.setHeader('Content-Type', 'image/png'); // Change to the correct MIME type if necessary
+
+        // Send the image file
+        const readStream = fs.createReadStream(imagePath);
+        readStream.pipe(res);
+      });
+    } else {
+      res.status(404).json({ message: 'Profile picture not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching profile picture:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+app.get('/fetchFriendsProfilePictures/:userid', async (req, res) => {
+  const { userid } = req.params;
+
+  try {
+    // Fetch the friends' IDs for the given user ID
+    const friendsQuery = 'SELECT friends FROM FRIENDS WHERE userid = $1';
+    const { rows } = await pool.query(friendsQuery, [userid]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'User not found or no friends.' });
+    }
+
+    const friendIds = rows[0].friends;
+
+    if (friendIds.length === 0) {
+      return res.json({ friends: [] }); // No friends found
+    }
+
+    // Fetch the profile picture links for the friends
+    const friendsDataQuery = `
+      SELECT u.userid, u.username, p.profilepiclink
+      FROM users u
+      LEFT JOIN profile_pictures p ON u.userid = p.userid
+      WHERE u.userid = ANY($1::int[])
+    `;
+    const friendsDataResult = await pool.query(friendsDataQuery, [friendIds]);
+    const friendsData = friendsDataResult.rows;
+
+    // Create an array of promises to check for the existence of each profile picture
+    const profilePicsPromises = friendsData.map((friend) => {
+      return new Promise((resolve) => {
+        const profilePicLink = friend.profilepiclink || '/default-profile.png'; // Use default image if not found
+        const imagePath = path.join(__dirname, profilePicLink);
+
+        // Check if the file exists
+        fs.stat(imagePath, (err, stats) => {
+          if (err || !stats.isFile()) {
+            resolve({
+              username: friend.username,
+              userid: friend.userid,
+              profilePicLink: null, // No profile picture found
+            });
+          } else {
+            resolve({
+              username: friend.username,
+              userid: friend.userid,
+              profilePicLink: imagePath, // File exists
+            });
+          }
+        });
+      });
+    });
+
+    // Wait for all promises to resolve
+    const friendsWithPictures = await Promise.all(profilePicsPromises);
+
+    // Send the profile pictures as a response
+    res.json({
+      friends: friendsWithPictures.map((friend) => ({
+        username: friend.username,
+        userid: friend.userid,
+        profilePicLink: friend.profilePicLink ? `/getProfilePic/${friend.userid}` : null,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching friends profile pictures:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });

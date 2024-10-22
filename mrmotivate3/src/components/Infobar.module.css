@@ -48,5 +48,6 @@
     height: 30px; /* Adjust as needed */
     overflow: hidden;
     border-radius: 50%;
+    object-fit: cover;
   
 }

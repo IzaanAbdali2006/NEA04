@@ -148,10 +148,17 @@ export default function Friends() {
             <div className={styles.leaderboard}>
               {leaderboardData.map((user, index) => (
                 <div key={index} className={styles.leaderboardItem}>
+                  <div className= {styles.itemleft}>
                   <span>{index + 1}.</span> {/* Ranking number */}
-                  <span>{user.username}</span>{" "}
+                  <img src={`http://localhost:5000/getProfilePic/${user.userid}`} alt={`${user.username}'s profile`} className={styles.profilePic}/>
+                  <span className= {styles.friendUsername}>{user.username}</span>{" "}
                   {/* Assuming you have username */}
-                  <span>{user[sortBy]}</span>
+
+                  </div>
+                  <div className= {styles.itemright}>
+
+                  <span className= {styles.statNum}>{user[sortBy]}</span>
+                  </div>
                 </div>
               ))}
             </div>

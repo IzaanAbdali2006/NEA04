@@ -80,7 +80,7 @@ export default function Challenges() {
 
     const handleCreateChallenge = async (newChallenge) => {
         try {
-            const response = await fetch('http://localhost:5000/create-challenge', {
+            const response = await fetch('http://localhost:5000/challenges', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

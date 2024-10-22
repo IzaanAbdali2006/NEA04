@@ -33,9 +33,10 @@
 .leaderboardItem{
     display: flex;
     justify-content: space-between;
-    gap: 10px;
-    margin-left: 20px;
-    margin-top: 5px;
+    margin-left: 50px;
+    margin-right: 50px;
+    margin-top: 12px;
+    padding: 10px;
 }
 
 .option {
@@ -152,4 +153,30 @@
     padding: 5px;
     border-radius: 10px;
     cursor: pointer;
+}
+.addFriend{
+  margin-top: 20px;
+}
+.searchFriend {
+  display: flex;
+  justify-content: center;
+}
+.suggestionsHeading {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 20px;
+  color: #2a9d8f;
+}
+.profilePic {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.friendUsername {
+  position: relative;
+  top: -15px;
+  right: -10px;
 }

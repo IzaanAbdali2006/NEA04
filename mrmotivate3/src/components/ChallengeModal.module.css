@@ -125,19 +125,27 @@
     justify-content: space-between;
 }
 .removeParticipantButton{
+    display: flex;
+    position: relative;
+    top: 10px;
+    border-radius: 50%;
     background-color: #2a9d8f;
-    border-radius:50% ;
     margin-right: 5px;
+    height: 30px;
     border: none;
     color: white;
     font-weight: bold;
     font-size: 20px;
 }
 .participantusername{
-    margin-top: 3.75px;
+    display: flex;
+    align-items: center;
+
 }
-.usericon{
-    margin-top: 3.75px;
-    margin-left: 5px;
-    color: #2a9d8f;
-}
+
+.profilePic {
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+  }

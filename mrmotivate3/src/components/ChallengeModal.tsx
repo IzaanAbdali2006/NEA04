@@ -184,7 +184,7 @@ export default function ChallengeModal({
                             <div className={styles.participantTags}>
                                 {invitedParticipants.map(participant => (
                                     <div key={participant.userid} className={styles.participantTag}>
-                                        <div className={styles.usericon}><PersonIcon/></div>
+                                        <img src={`http://localhost:5000/getProfilePic/${participant.userid}`} alt={`${participant.username}'s profile`} className={styles.profilePic}/>
                                         <span className={styles.participantusername}>{participant.username}</span>
                                         <button
                                             type="button"
