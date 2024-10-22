@@ -36,7 +36,7 @@ app.post("/login", async (req, res) => {
         .json({ error: "Please provide username and password" });
     }
 
-    // Query the database for the user with the provided username
+    // Query the database for the user with the provided username test
     const userQuery = await pool.query(
       "SELECT * FROM users WHERE username = $1",
       [username]
